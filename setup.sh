@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # setup.sh
 
-export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="/global/homes/i/icecubed/tacc-sync/workspace"}
+export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="${HOME}/tacc-sync/work"}
 
 # if Rust is not installed
 if ! command -v rustc &> /dev/null

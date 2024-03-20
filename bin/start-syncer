@@ -2,9 +2,9 @@
 # start-syncer
 
 # application configuration (Production)
-# export TACC_SYNC_DATA_ROOT=${TACC_SYNC_DATA_ROOT:="/global/cfs/cdirs/icecubed"}
-# export TACC_SYNC_ROOT=${TACC_SYNC_ROOT:="/global/homes/i/icecubed/tacc-sync"}
-# export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="/global/homes/i/icecubed/tacc-sync/workspace"}
+# export TACC_SYNC_DATA_ROOT=${TACC_SYNC_DATA_ROOT:="${CFS}/icecubed"}
+# export TACC_SYNC_ROOT=${TACC_SYNC_ROOT:="${HOME}/tacc-sync"}
+# export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="${HOME}/tacc-sync/work"}
 
 # application configuration (Development)
 export TACC_SYNC_DATA_ROOT=${TACC_SYNC_DATA_ROOT:="/tmp/tacc/data"}
