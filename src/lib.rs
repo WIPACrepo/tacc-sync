@@ -5,10 +5,11 @@ use log::{error, info};
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
 use std::fs::{self, File};
-use std::io::{self, BufRead, Read};
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
+/// HpssFile represents the file metadata returned by HPSS
 #[derive(Clone)]
 pub struct HpssFile {
     pub hpss_path: String,
@@ -18,14 +19,49 @@ pub struct HpssFile {
     pub tape_offset: u64,
 }
 
+/// TaccSyncFile represents a file to synchronize from NERSC to TACC
+#[derive(Debug, Deserialize, Serialize)]
+pub struct TaccSyncFile {
+    /// the name of the file without any path information
+    pub file_name: String,
+    /// absolute path of the file in HPSS
+    pub hpss_path: String,
+    /// recorded size of the file in HPSS
+    pub size: u64,
+    /// the tape mark
+    pub tape_num: u64,
+    /// how many bytes past the mark the file starts
+    pub tape_offset: u64,
+}
+
+
 /// TaccSyncRequest represents a request to synchronize files from NERSC to TACC
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TaccSyncRequest {
+    /// this is the TaccSyncRequest id
+    pub request_id: Uuid,
+    /// the timestamp when this request was created
     pub date_created: DateTime<Utc>,
+    pub source: String,
     pub dest: String,
     pub pattern: String,
+}
+
+/// TaccSyncWork represents a tape-grouped set of files to synchronize from NERSC to TACC
+#[derive(Debug, Deserialize, Serialize)]
+pub struct TaccSyncWork {
+    /// this is the TaccSyncWork id
+    pub work_id: Uuid,
+    /// the timestamp when this work unit was created
+    pub date_created: DateTime<Utc>,
+    /// the HPSS tape(s) associated with this group of files
+    pub tape: String,
+    /// the total size of this group of files
+    pub size: u64,
+    /// this is the TaccSyncRequest id; the request that generated this work
     pub request_id: Uuid,
-    pub source: String,
+    /// the list of files to synchronize from NERSC to TACC
+    pub files: Vec<TaccSyncFile>,
 }
 
 /// Converts a string with truthy values into a boolean.
@@ -136,11 +172,11 @@ pub fn move_to_outbox(file_path: &PathBuf, dest_dir: &PathBuf) {
         // construct the destination path by appending the file name to the destination directory
         let dest_path = dest_dir.join(file_name);
         // attempt to move the file
-        info!("Moving {} to {}", file_path.to_string_lossy(), dest_path.to_string_lossy());
+        info!("Moving {} to {}", file_path.display(), dest_path.display());
         match fs::rename(&file_path, &dest_path) {
             Err(e) => {
                 // if we can't move a file, better to stop immediately
-                error!("Unable to rename: Unable to move {} to {}", file_path.to_string_lossy(), dest_dir.to_string_lossy());
+                error!("Unable to rename: Unable to move {} to {}", file_path.display(), dest_dir.display());
                 error!("Error: {}", e);
                 panic!("FULL STOP -- Failed to perform basic but critical file system operation")
             },
@@ -149,22 +185,6 @@ pub fn move_to_outbox(file_path: &PathBuf, dest_dir: &PathBuf) {
     }
 
     // if we can't move a file, better to stop immediately
-    error!("Missing file_name: Unable to move {} to {}", file_path.to_string_lossy(), dest_dir.to_string_lossy());
+    error!("Missing file_name: Unable to move {} to {}", file_path.display(), dest_dir.display());
     panic!("FULL STOP -- Failed to perform basic but critical file system operation")
-}
-
-// --------------------------------------------------------------------------
-
-pub fn read_paths_from_file<P: AsRef<Path>>(file_path: P) -> io::Result<Vec<String>> {
-    let file = File::open(file_path)?;
-    let reader = io::BufReader::new(file);
-    let mut paths = Vec::new();
-
-    for line in reader.lines() {
-        if let Ok(path) = line {
-            paths.push(path);
-        }
-    }
-
-    Ok(paths)
 }

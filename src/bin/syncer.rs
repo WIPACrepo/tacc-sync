@@ -1,16 +1,16 @@
 // syncer.rs
 
+use chrono::Utc;
 use globset::{Glob, GlobSetBuilder};
-use log::{debug, error, info, Level, log_enabled, trace, warn};
-use std::cmp::Ordering;
+use log::{error, info};
 use std::fs::File;
-use std::io::{self, BufRead, BufWriter, Write};
+use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 use tacc_sync::{
-    boolify, clean_up_and_exit, find_json_files_in_directory, load_request_from_file, move_to_outbox, HpssFile, TaccSyncRequest
+    boolify, clean_up_and_exit, find_json_files_in_directory, load_request_from_file, move_to_outbox, HpssFile, TaccSyncFile, TaccSyncRequest, TaccSyncWork
 };
 use uuid::Uuid;
 
@@ -54,12 +54,12 @@ fn main() {
         // for each unit of work
         info!("Processing {} work units", num_files);
         for (index, json_file) in json_files.iter().enumerate() {
-            let json_file_str = json_file.as_path().to_string_lossy();
+            let json_file_str = json_file.as_path().display();
             info!("Processing {}/{}: {}", index+1, num_files, json_file_str);
             // if we are able to load the sync request from the file
             if let Ok(request) = load_request_from_file(json_file) {
                 // process the sync request
-                process_sync_request(request, &hsi_base_path, &PathBuf::from(&semaphore_dir), &PathBuf::from(&work_dir));
+                process_sync_request(&request, &hsi_base_path, &PathBuf::from(&semaphore_dir), &PathBuf::from(&work_dir));
                 // move the request to the outbox
                 move_to_outbox(json_file, &PathBuf::from(&outbox_dir));
             }
@@ -82,7 +82,7 @@ fn main() {
     }
 }
 
-fn process_sync_request(request: TaccSyncRequest, hsi_base_path: &str, semaphore_dir: &PathBuf, work_dir: &PathBuf) {
+fn process_sync_request(request: &TaccSyncRequest, hsi_base_path: &str, semaphore_dir: &PathBuf, work_dir: &PathBuf) {
     // query hsi for all icecube files
     let paths = query_hsi_all_files(hsi_base_path);
     // filter out the icecube files that match the pattern
@@ -94,7 +94,7 @@ fn process_sync_request(request: TaccSyncRequest, hsi_base_path: &str, semaphore
     // group the metadata into per-tape groups
     let tape_groups = group_files_by_tape(&mut hpss_files);
     // generate per-tape work units
-    generate_work_units(&tape_groups, work_dir);
+    generate_work_units(request, &tape_groups, work_dir);
 }
 
 fn query_hsi_all_files(hsi_base_path: &str) -> Vec<String> {
@@ -201,24 +201,16 @@ fn parse_tape_metadata(file_metadata: Vec<String>) -> Vec<HpssFile> {
 
         // if we didn't get the proper number of fields, it is BAD MOJO
         if fields.len() != NUM_HSI_METADATA_FIELDS {
-            // log about it and skip
+            // log about it and die; we leave no file behind!
             error!("hsi metadata parse error: NUM_HSI_METADATA_FIELDS={}, fields.len()={}", NUM_HSI_METADATA_FIELDS, fields.len());
             error!("Line: {}", metadata);
-            continue;
+            panic!("BAD MOJO - hsi metadata parse error: NUM_HSI_METADATA_FIELDS");
         }
 
-        // if fields[5] contains a comma, that's multiple tapes?; is that a bad thing?
-        if fields[5].contains(',') {
-            warn!("hsi metadata parse error: fields[5]={}", fields[5]);
-            warn!("Line: {}", metadata);
-            // we'll log about it, but let it slide for now...
-            // continue;
-        }
-        // if the tape is specified, use it (minus last two characters), otherwise call it "0"
-        // let tape = if fields[5].len() < 3 { "0" } else { &fields[5][..fields[5].len() - 2] };
+        // if the tape is specified, use it, otherwise call it "0"
         let tape = if fields[5].len() < 3 { "0" } else { &fields[5] };
 
-        // if fields[4] has a + we've got tape number and offset
+        // if fields[4] has a + we've got tape number and offset, otherwise call them "0"
         let mut tape_num = String::from("0");
         let mut tape_offset = String::from("0");
         if fields[4].contains('+') {
@@ -238,11 +230,12 @@ fn parse_tape_metadata(file_metadata: Vec<String>) -> Vec<HpssFile> {
     }
 
     // return the list of files we need to copy to the caller
-    info!("Returning {} HpssFile objects to the caller", hpss_files.len());
     hpss_files
 }
 
 fn group_files_by_tape(hpss_files: &mut Vec<HpssFile>) -> Vec<Vec<HpssFile>> {
+    info!("Grouping {} HpssFile objects into tape groups", hpss_files.len());
+
     // sort the vector by tape, tape_num, tape_offset, hpss_path
     hpss_files.sort_by(|a, b| {
         a.tape.cmp(&b.tape)
@@ -269,19 +262,49 @@ fn group_files_by_tape(hpss_files: &mut Vec<HpssFile>) -> Vec<Vec<HpssFile>> {
     }
 
     // return the tape-grouped files
-    info!("Returning {} tape groups to the caller", grouped.len());
     grouped
 }
 
-fn generate_work_units(tape_groups: &Vec<Vec<HpssFile>>, work_dir: &PathBuf) {
+fn generate_work_units(request: &TaccSyncRequest, tape_groups: &Vec<Vec<HpssFile>>, work_dir: &PathBuf) {
     // generate work units in the work directory
-    info!("Would generate work units in directory: {}", work_dir.display());
-    info!("There are {} tape groups", tape_groups.len());
+    info!("Generating {} work units in work directory: {}", tape_groups.len(), work_dir.display());
     for (index, tape_group) in tape_groups.iter().enumerate() {
+        // log about what we're processing
         let mut size = 0;
         for file in tape_group {
             size += file.size;
         }
-        info!("Tape group: {}:{} ({} files - {} bytes)", index, tape_group[0].tape, tape_group.len(), size);
+        info!("Processing {}/{}: {} ({} files - {} bytes)", index+1, tape_groups.len(), tape_group[0].tape, tape_group.len(), size);
+
+        // for each HpssFile in this tape group
+        let mut tacc_sync_files = Vec::new();
+        for hpss_file in tape_group {
+            // create a TaccSyncFile for that HpssFile
+            let path = Path::new(&hpss_file.hpss_path);
+            let file_name = path.file_name().expect("Unable to get file_name from hpss_path");
+            tacc_sync_files.push(TaccSyncFile {
+                file_name: file_name.to_string_lossy().to_string(),
+                hpss_path: hpss_file.hpss_path.clone(),
+                size: hpss_file.size,
+                tape_num: hpss_file.tape_num,
+                tape_offset: hpss_file.tape_offset,
+            });
+        }
+
+        // create a TaccSyncWork work unit for this tape group
+        let tacc_sync_work = TaccSyncWork {
+            date_created: Utc::now(),
+            files: tacc_sync_files,
+            request_id: request.request_id,
+            size,
+            tape: tape_group[0].tape.clone(),
+            work_id: Uuid::new_v4(),
+        };
+
+        // write the work unit for this tape group
+        let work_unit_path = work_dir.join(format!("{}.json", tacc_sync_work.work_id));
+        info!("Writing work unit to {}", work_unit_path.display());
+        let file = File::create(work_unit_path).expect("Unable to create file for work unit");
+        serde_json::to_writer(file, &tacc_sync_work).expect("Unable to write JSON to work unit file");
     }
 }
