@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # stop-syncer
 
-# export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="/global/homes/i/icecubed/tacc-sync/workspace"}
+# export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="${HOME}/tacc-sync/work"}
 export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="/tmp/tacc/work"}
 export PID_PATH=${PID_PATH:="${TACC_SYNC_WORK_ROOT}/semaphore/syncer.pid"}
 
