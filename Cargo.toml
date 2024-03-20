@@ -1,0 +1,36 @@
+# Cargo.toml
+
+[package]
+name = "tacc-sync"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "finisher"
+path = "src/bin/finisher.rs"
+
+[[bin]]
+name = "globus_xfer"
+path = "src/bin/globus_xfer.rs"
+
+[[bin]]
+name = "retriever"
+path = "src/bin/retriever.rs"
+
+[[bin]]
+name = "reaper"
+path = "src/bin/reaper.rs"
+
+[[bin]]
+name = "syncer"
+path = "src/bin/syncer.rs"
+
+[dependencies]
+chrono = { version = "0.4.35", features = ["serde"] }
+env_logger = "0.11.3"
+globset = "0.4.14"
+log = "0.4.21"
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = "1.0.114"
+uuid = { version = "1.7.0", features = ["serde", "v4"] }

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# stop-syncer
+
+# export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="/global/homes/i/icecubed/tacc-sync/workspace"}
+export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="/tmp/tacc/work"}
+export PID_PATH=${PID_PATH:="${TACC_SYNC_WORK_ROOT}/semaphore/syncer.pid"}
+
+# if there is no pid file, there is nothing for us to do
+if [[ ! -f $PID_PATH ]]; then
+    echo "Syncer component has no pid file at: $PID_PATH"
+    exit 1
+fi
+
+# kill the existing Copier process
+kill -9 $(<$PID_PATH)
+
+# delete the now obsolete pid file
+rm -v "$PID_PATH"
