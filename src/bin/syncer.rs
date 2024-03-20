@@ -106,7 +106,7 @@ fn query_hsi_all_files(hsi_base_path: &str) -> Vec<String> {
         .output()
         .expect("Unable to query hsi for file metadata: hsi -q ls -1 -R $HSI_BASE_PATH");
 
-    // convert the output to a String
+    // convert the output to a String (NOTE: stderr not stdout!)
     let stderr = String::from_utf8(output.stderr).expect("hsi output does not conform to utf8 encoding");
 
     // return the vector containing one directory or file per line
@@ -156,18 +156,24 @@ fn query_hsi_tape_metadata(request_files: Vec<String>, semaphore_dir: &PathBuf) 
     info!("Removing hsi batch file: {}", hsi_batch_file.display());
     std::fs::remove_file(hsi_batch_file).expect("Unable to delete hsi batch temporary file");
 
-    // convert the output to a String
-    let stderr = String::from_utf8(output.stderr).expect("hsi output does not conform to utf8 encoding");
+    // convert the output to a String (NOTE: stdout not stderr!)
+    let stdout = String::from_utf8(output.stdout).expect("hsi output does not conform to utf8 encoding");
 
     // return the vector containing metadata for one file per line
-    stderr.lines().map(ToString::to_string).collect::<Vec<String>>()
+    stdout.lines().map(ToString::to_string).collect::<Vec<String>>()
 }
 
 fn parse_tape_metadata(file_metadata: Vec<String>) -> Vec<HpssFile> {
     // parse the metadata lines
-    info!("Parsing metadata from hsi into HpssFile objects");
+    info!("Parsing metadata from {} hsi files into HpssFile objects", file_metadata.len());
     let mut hpss_files = Vec::new();
 
+    // hpss output will come back like this:
+    // ls -NP /home/projects/icecube/data/exp/IceCube/2009/unbiased/PFRaw/0101/cd88bb827ab811eba0ccfac645b4ea48.zip
+    // FILE    /home/projects/icecube/data/exp/IceCube/2009/unbiased/PFRaw/0101/cd88bb827ab811eba0ccfac645b4ea48.zip   99658060045     99658060045     840+0   AG084600        5       0       1       03/01/2021      11:15:47        03/01/2021
+    //         11:30:52
+
+    // we care about the second line (the response to the command) ...
     //  0 // FILE
     //  1 // /home/projects/icecube/data/exp/IceCube/2011/unbiased/PFRaw/1109/b26eac34-7848-49de-a7c2-193e954af803.zip
     //  2 // 568860644320
@@ -185,7 +191,12 @@ fn parse_tape_metadata(file_metadata: Vec<String>) -> Vec<HpssFile> {
     for metadata in file_metadata {
         let fields = metadata.split('\t').map(|s| s.to_string()).collect::<Vec<String>>();
 
-        // if we didn't get the proper number of fields, it's BAD MOJO
+        // if fields[0] is not 'FILE', it's probably the command; ignore it
+        if fields[0] != "FILE" {
+            continue;
+        }
+
+        // if we didn't get the proper number of fields, it is BAD MOJO
         if fields.len() != NUM_HSI_METADATA_FIELDS {
             // log about it and skip
             error!("hsi metadata parse error: NUM_HSI_METADATA_FIELDS={}, fields.len()={}", NUM_HSI_METADATA_FIELDS, fields.len());
@@ -193,14 +204,7 @@ fn parse_tape_metadata(file_metadata: Vec<String>) -> Vec<HpssFile> {
             continue;
         }
 
-        // if fields[0] is not 'FILE', it's BAD MOJO
-        if fields[0] != "FILE" {
-            warn!("hsi metadata parse error: Expected=FILE, fields[0]={}", fields[0]);
-            warn!("Line: {}", metadata);
-            continue;
-        }
-
-        // if fields[5] contains a comma, that's multiple tapes; is that a bad thing?
+        // if fields[5] contains a comma, that's multiple tapes?; is that a bad thing?
         if fields[5].contains(',') {
             warn!("hsi metadata parse error: fields[4]={}", fields[4]);
             warn!("Line: {}", metadata);
@@ -230,6 +234,7 @@ fn parse_tape_metadata(file_metadata: Vec<String>) -> Vec<HpssFile> {
     }
 
     // return the list of files we need to copy to the caller
+    info!("Returning {} HpssFile objects to the caller", hpss_files.len());
     hpss_files
 }
 
