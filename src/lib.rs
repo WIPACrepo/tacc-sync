@@ -9,12 +9,13 @@ use std::io::{self, BufRead, Read};
 use std::path::{Path, PathBuf};
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct HpssFile {
     pub hpss_path: String,
     pub size: u64,
     pub tape: String,
-    pub tape_num: String,
-    pub tape_offset: String,
+    pub tape_num: u64,
+    pub tape_offset: u64,
 }
 
 /// TaccSyncRequest represents a request to synchronize files from NERSC to TACC

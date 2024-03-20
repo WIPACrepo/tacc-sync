@@ -2,6 +2,7 @@
 
 use globset::{Glob, GlobSetBuilder};
 use log::{debug, error, info, Level, log_enabled, trace, warn};
+use std::cmp::Ordering;
 use std::fs::File;
 use std::io::{self, BufRead, BufWriter, Write};
 use std::path::{Path, PathBuf};
@@ -54,7 +55,7 @@ fn main() {
         info!("Processing {} work units", num_files);
         for (index, json_file) in json_files.iter().enumerate() {
             let json_file_str = json_file.as_path().to_string_lossy();
-            info!("Processing {}/{}: {}", index, num_files, json_file_str);
+            info!("Processing {}/{}: {}", index+1, num_files, json_file_str);
             // if we are able to load the sync request from the file
             if let Ok(request) = load_request_from_file(json_file) {
                 // process the sync request
@@ -89,9 +90,11 @@ fn process_sync_request(request: TaccSyncRequest, hsi_base_path: &str, semaphore
     // query hsi for file metadata including tape location
     let file_metadata = query_hsi_tape_metadata(request_files, semaphore_dir);
     // sort hsi metadata by tape and position
-    let hpss_files = parse_tape_metadata(file_metadata);
+    let mut hpss_files = parse_tape_metadata(file_metadata);
+    // group the metadata into per-tape groups
+    let tape_groups = group_files_by_tape(&mut hpss_files);
     // generate per-tape work units
-    generate_work_units(hpss_files, work_dir);
+    generate_work_units(&tape_groups, work_dir);
 }
 
 fn query_hsi_all_files(hsi_base_path: &str) -> Vec<String> {
@@ -206,13 +209,14 @@ fn parse_tape_metadata(file_metadata: Vec<String>) -> Vec<HpssFile> {
 
         // if fields[5] contains a comma, that's multiple tapes?; is that a bad thing?
         if fields[5].contains(',') {
-            warn!("hsi metadata parse error: fields[4]={}", fields[4]);
+            warn!("hsi metadata parse error: fields[5]={}", fields[5]);
             warn!("Line: {}", metadata);
             // we'll log about it, but let it slide for now...
             // continue;
         }
         // if the tape is specified, use it (minus last two characters), otherwise call it "0"
-        let tape = if fields[5].len() < 3 { "0" } else { &fields[5][..fields[5].len() - 2] };
+        // let tape = if fields[5].len() < 3 { "0" } else { &fields[5][..fields[5].len() - 2] };
+        let tape = if fields[5].len() < 3 { "0" } else { &fields[5] };
 
         // if fields[4] has a + we've got tape number and offset
         let mut tape_num = String::from("0");
@@ -228,8 +232,8 @@ fn parse_tape_metadata(file_metadata: Vec<String>) -> Vec<HpssFile> {
             hpss_path: fields[1].clone(),
             size: fields[2].parse().unwrap(),
             tape: String::from(tape),
-            tape_num,
-            tape_offset,
+            tape_num: tape_num.parse().unwrap(),
+            tape_offset: tape_offset.parse().unwrap(),
         });
     }
 
@@ -238,10 +242,42 @@ fn parse_tape_metadata(file_metadata: Vec<String>) -> Vec<HpssFile> {
     hpss_files
 }
 
-fn generate_work_units(hpss_files: Vec<HpssFile>, work_dir: &PathBuf) {
+fn group_files_by_tape(hpss_files: &mut Vec<HpssFile>) -> Vec<Vec<HpssFile>> {
     // sort the vector by tape, tape_num, tape_offset, hpss_path
+    hpss_files.sort_by(|a, b| {
+        a.tape.cmp(&b.tape)
+            .then_with(|| a.tape_num.cmp(&b.tape_num))
+            .then_with(|| a.tape_offset.cmp(&b.tape_offset))
+            .then_with(|| a.hpss_path.cmp(&b.hpss_path))
+    });
 
     // group files into work units according to tape
+    let mut grouped: Vec<Vec<HpssFile>> = Vec::new();
+    let mut current_group: Vec<HpssFile> = Vec::new();
 
+    for hpss_file in hpss_files {
+        if current_group.is_empty() || current_group[0].tape == hpss_file.tape {
+            current_group.push(hpss_file.clone());
+        } else {
+            grouped.push(current_group);
+            current_group = vec![hpss_file.clone()];
+        }
+    }
+
+    if !current_group.is_empty() {
+        grouped.push(current_group);
+    }
+
+    // return the tape-grouped files
+    info!("Returning {} tape groups to the caller", grouped.len());
+    grouped
+}
+
+fn generate_work_units(tape_groups: &Vec<Vec<HpssFile>>, work_dir: &PathBuf) {
     // generate work units in the work directory
+    info!("Would generate work units in directory: {}", work_dir.display());
+    info!("There are {} tape groups", tape_groups.len());
+    for (index, tape_group) in tape_groups.iter().enumerate() {
+        info!("Tape group: {}:{}", index, tape_group[0].tape);
+    }
 }
