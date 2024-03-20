@@ -278,6 +278,10 @@ fn generate_work_units(tape_groups: &Vec<Vec<HpssFile>>, work_dir: &PathBuf) {
     info!("Would generate work units in directory: {}", work_dir.display());
     info!("There are {} tape groups", tape_groups.len());
     for (index, tape_group) in tape_groups.iter().enumerate() {
-        info!("Tape group: {}:{}", index, tape_group[0].tape);
+        let mut size = 0;
+        for file in tape_group {
+            size += file.size;
+        }
+        info!("Tape group: {}:{} ({} files - {} bytes)", index, tape_group[0].tape, tape_group.len(), size);
     }
 }
