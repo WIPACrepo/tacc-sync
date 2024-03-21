@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# start-reaper
+
+# application configuration (Production)
+# export TACC_SYNC_DATA_ROOT=${TACC_SYNC_DATA_ROOT:="${CFS}/icecubed/tacc-sync"}
+# export TACC_SYNC_ROOT=${TACC_SYNC_ROOT:="${HOME}/tacc-sync"}
+# export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="${HOME}/tacc-sync/work"}
+
+# application configuration (Development)
+export TACC_SYNC_DATA_ROOT=${TACC_SYNC_DATA_ROOT:="/tmp/tacc/data"}
+export TACC_SYNC_ROOT=${TACC_SYNC_ROOT:="${HOME}/github/tacc-sync"}
+export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="/tmp/tacc/work"}
+
+# component configuration
+export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/reaper_queue"}
+export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/reaper.log"}
+export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/finished"}
+export PID_PATH=${PID_PATH:="${TACC_SYNC_WORK_ROOT}/semaphore/reaper.pid"}
+export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/reaper"}
+export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
+export RUST_LOG=${RUST_LOG:="trace"}
+export SEMAPHORE_DIR=${SEMAPHORE_DIR:="${TACC_SYNC_WORK_ROOT}/semaphore"}
+export TRANSFER_DIR=${TRANSFER_DIR:="${TACC_SYNC_DATA_ROOT}"}
+export WORK_SLEEP_SECONDS=${WORK_SLEEP_SECONDS:="3600"}  # 1 hour
+
+# if we've already got a .pid file, then bail out
+if [[ -f $PID_PATH ]]; then
+    echo "Reaper component is already running: $PID_PATH"
+    echo "kill -9 $(<$PID_PATH)"
+    exit 1
+fi
+
+# start the Reaper component
+echo "Starting Reaper component"
+${TACC_SYNC_ROOT}/target/release/reaper 2>>${LOG_PATH} &
+
+# capture the process ID of the component
+echo $! >$PID_PATH
