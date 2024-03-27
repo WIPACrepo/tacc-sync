@@ -305,6 +305,6 @@ fn generate_work_units(request: &TaccSyncRequest, tape_groups: &Vec<Vec<HpssFile
         let work_unit_path = work_dir.join(format!("{}.json", tacc_sync_work.work_id));
         info!("Writing work unit to {}", work_unit_path.display());
         let file = File::create(work_unit_path).expect("Unable to create file for work unit");
-        serde_json::to_writer(file, &tacc_sync_work).expect("Unable to write JSON to work unit file");
+        serde_json::to_writer_pretty(file, &tacc_sync_work).expect("Unable to write JSON to work unit file");
     }
 }
