@@ -72,7 +72,7 @@ fn main() {
             }
             // we weren't able to load the sync request
             else {
-                error!("Unable to load TaccSyncRequest: {}", json_file_str);
+                error!("Unable to load TaccSyncWork: {}", json_file_str);
                 move_to_outbox(json_file, &PathBuf::from(&quarantine_dir));
             }
         }
@@ -117,6 +117,7 @@ fn process_work(
     writer.flush().expect("Unable to close hsi batch temporary file");
 
     // run the hsi command, feeding it the batch file
+    info!("Running hsi command: hsi -P in {}", hsi_batch_path.display());
     let output = Command::new("hsi")
         .arg("-P")
         .arg("in")

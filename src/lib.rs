@@ -62,6 +62,8 @@ pub struct TaccSyncWork {
     pub request_id: Uuid,
     /// the list of files to synchronize from NERSC to TACC
     pub files: Vec<TaccSyncFile>,
+    /// the Globus transfer id of this work unit, if created
+    pub transfer_id: Option<Uuid>,
 }
 
 /// Converts a string with truthy values into a boolean.
