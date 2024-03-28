@@ -67,7 +67,7 @@ fn main() {
 
         // if this was a one-shot adventure
         if run_once {
-            info!("RUN_ONCE_AND_DIE: {} -- finisher now ending", run_once_and_die);
+            info!("RUN_ONCE_AND_DIE: {} -- reaper now ending", run_once_and_die);
             clean_up_and_exit(&pid_path, EXIT_SUCCESS);
         }
 

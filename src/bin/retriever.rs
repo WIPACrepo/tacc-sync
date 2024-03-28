@@ -79,7 +79,7 @@ fn main() {
 
         // if this was a one-shot adventure
         if run_once {
-            info!("RUN_ONCE_AND_DIE: {} -- finisher now ending", run_once_and_die);
+            info!("RUN_ONCE_AND_DIE: {} -- retriever now ending", run_once_and_die);
             clean_up_and_exit(&pid_path, EXIT_SUCCESS);
         }
 
@@ -113,7 +113,14 @@ fn process_work(
     for file in &work.files {
         let output_path = hpss_out_dir.join(&file.file_name);
         let hpss_path = &file.hpss_path;
-        writeln!(writer, "get -C -P {} : {}", output_path.display(), hpss_path).expect("Unable to write to hsi batch temporary file");
+        // get      get a file from hpss
+        // -c on    turn on checksums
+        // -C       purge the file from hpss disk cache; we'll only read it just the once to put it on icecube disk
+        // -P       preserve timestamps as recorded in hpss
+        // {}       the place where we want to put the file on disk
+        // :        gotta love good ol hsi
+        // {}       the place where the file is stored in hpss
+        writeln!(writer, "get -c on -C -P {} : {}", output_path.display(), hpss_path).expect("Unable to write to hsi batch temporary file");
     }
     writer.flush().expect("Unable to close hsi batch temporary file");
 

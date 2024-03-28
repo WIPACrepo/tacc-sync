@@ -288,6 +288,7 @@ fn generate_work_units(request: &TaccSyncRequest, tape_groups: &Vec<Vec<HpssFile
                 size: hpss_file.size,
                 tape_num: hpss_file.tape_num,
                 tape_offset: hpss_file.tape_offset,
+                globus_task_id: None,
             });
         }
 
@@ -299,7 +300,6 @@ fn generate_work_units(request: &TaccSyncRequest, tape_groups: &Vec<Vec<HpssFile
             size,
             tape: tape_group[0].tape.clone(),
             work_id: Uuid::new_v4(),
-            transfer_id: None,
         };
 
         // write the work unit for this tape group

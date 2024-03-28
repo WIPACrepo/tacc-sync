@@ -32,8 +32,9 @@ pub struct TaccSyncFile {
     pub tape_num: u64,
     /// how many bytes past the mark the file starts
     pub tape_offset: u64,
+    /// the Globus task id for transferring this file, if created
+    pub globus_task_id: Option<Uuid>,
 }
-
 
 /// TaccSyncRequest represents a request to synchronize files from NERSC to TACC
 #[derive(Debug, Deserialize, Serialize)]
@@ -62,8 +63,6 @@ pub struct TaccSyncWork {
     pub request_id: Uuid,
     /// the list of files to synchronize from NERSC to TACC
     pub files: Vec<TaccSyncFile>,
-    /// the Globus transfer id of this work unit, if created
-    pub transfer_id: Option<Uuid>,
 }
 
 /// Converts a string with truthy values into a boolean.
