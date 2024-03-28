@@ -3,6 +3,7 @@
 use anyhow::Result;
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
+use std::any;
 use std::error::Error;
 use std::fs::{self, File};
 use std::path::PathBuf;
@@ -53,8 +54,14 @@ pub struct GlobusTask {
 
 /// GlobusTransferCreated represents the result of the globus transfer command
 #[derive(Debug, Deserialize, Serialize)]
-pub struct GlobusTransferCreated {
-    /// the Globus task id for this transfer
+pub struct TransferResult {
+    #[serde(rename = "DATA_TYPE")]
+    pub data_type: String,
+    pub code: String,
+    pub message: String,
+    pub request_id: String,
+    pub resource: String,
+    pub submission_id: Uuid,
     pub task_id: Uuid,
 }
 
@@ -305,7 +312,7 @@ fn execute_globus_transfer(
     context: &GlobusXferContext,
     work_id: &Uuid,
     file: &mut TaccSyncFile,
-) -> Result<GlobusTransferCreated> {
+) -> Result<TransferResult> {
     // do some sanity checking up front
     let hpss_base_path = &context.hpss_base_path;
     if !file.hpss_path.starts_with(hpss_base_path) {
@@ -330,7 +337,6 @@ fn execute_globus_transfer(
 
     // run the command: globus transfer {src} {dst}
     info!("Running command: globus transfer {} {}", src_path, dst_path);
-    panic!("Let's just check our progress here, shall we?");
     let output = Command::new("globus")
         .arg("transfer")
         .arg("--sync-level")
@@ -348,7 +354,13 @@ fn execute_globus_transfer(
     debug!("{}", stdout);
 
     // deserialize the GlobusTask and return it to the caller
-    let globus: GlobusTransferCreated = serde_json::from_str(&stdout)?;
+    let globus: TransferResult = serde_json::from_str(&stdout)?;
+
+    // and let's do a sanity check
+    if globus.code != "Accepted" {
+        error!("BAD MOJO -- Globus responded with {} instead of 'Accepted'", globus.code);
+        return Err(anyhow::anyhow!("BAD MOJO -- Globus responded with {} instead of 'Accepted'", globus.code));
+    }
 
     // tell the caller about the result of creating the transfer
     Ok(globus)
