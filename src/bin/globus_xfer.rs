@@ -3,7 +3,6 @@
 use anyhow::Result;
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
-use std::any;
 use std::error::Error;
 use std::fs::{self, File};
 use std::path::PathBuf;
@@ -262,19 +261,19 @@ fn rewrite_work_unit(
     info!("Rewriting work unit: {}", work_unit_path.display());
 
     // rename the old work unit to a safety copy
-    let safety_copy_path = work_unit_path.join(".safety");
+    let safety_copy_build = format!("{}.safety", work_unit_path.display());
+    let safety_copy_path = PathBuf::from(safety_copy_build);
     info!("Making a safety copy at: {}", safety_copy_path.display());
     fs::rename(&work_unit_path, &safety_copy_path)?;
 
     // rewrite the work unit for this tape group
-    info!("Creating new work unit at: {}", safety_copy_path.display());
+    info!("Creating new work unit at: {}", work_unit_path.display());
     let file = File::create(work_unit_path)?;
     serde_json::to_writer_pretty(file, &work)?;
 
     // remove the safety copy after the successful rewrite
     info!("Removing the safety copy at: {}", safety_copy_path.display());
-    // TODO: Make sure this works properly !!
-    //fs::remove_file(safety_copy_path)?;
+    // fs::remove_file(safety_copy_path)?;
 
     // tell the caller the work unit was successfully rewritten
     Ok(())
