@@ -99,7 +99,8 @@ fn process_work(
 
     // create the directory in the transfer buffer
     let hpss_out_dir = transfer_dir.join(format!("{}", work.work_id));
-    fs::create_dir(&hpss_out_dir).expect("Unable to create output directory in transfer buffer");
+    info!("Creating transfer buffer directory: {}", hpss_out_dir.display());
+    fs::create_dir_all(&hpss_out_dir).expect("Unable to create output directory in transfer buffer");
 
     // create a temporary file we can feed to hsi
     let file_name = Uuid::new_v4().to_string();
