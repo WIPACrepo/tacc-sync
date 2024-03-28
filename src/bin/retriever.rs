@@ -113,7 +113,7 @@ fn process_work(
     for file in &work.files {
         let output_path = hpss_out_dir.join(&file.file_name);
         let hpss_path = &file.hpss_path;
-        writeln!(writer, "get {} : {}", output_path.display(), hpss_path).expect("Unable to write to hsi batch temporary file");
+        writeln!(writer, "get -C -P {} : {}", output_path.display(), hpss_path).expect("Unable to write to hsi batch temporary file");
     }
     writer.flush().expect("Unable to close hsi batch temporary file");
 

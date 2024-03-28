@@ -53,6 +53,7 @@ fn main() {
                 info!("Deleting files for {}: {} ({} files - {} bytes)", work.work_id, work.tape, work.files.len(), work.size);
                 let transfer_pb = PathBuf::from(&transfer_dir);
                 let hpss_out_dir = transfer_pb.join(format!("{}", work.work_id));
+                info!("Deleting transfer buffer directory: {}", hpss_out_dir.display());
                 fs::remove_dir_all(&hpss_out_dir).expect("Unable to remove output directory in transfer buffer");
                 // send the work to the finished directory
                 move_to_outbox(json_file, &PathBuf::from(&outbox_dir));
