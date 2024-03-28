@@ -273,7 +273,7 @@ fn rewrite_work_unit(
 
     // remove the safety copy after the successful rewrite
     info!("Removing the safety copy at: {}", safety_copy_path.display());
-    // fs::remove_file(safety_copy_path)?;
+    fs::remove_file(safety_copy_path)?;
 
     // tell the caller the work unit was successfully rewritten
     Ok(())
