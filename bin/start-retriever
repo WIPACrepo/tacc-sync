@@ -12,6 +12,7 @@ export TACC_SYNC_ROOT=${TACC_SYNC_ROOT:="${HOME}/github/tacc-sync"}
 export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="/tmp/tacc/work"}
 
 # component configuration
+export HPSS_BASE_PATH=${HPSS_BASE_PATH:="/home/projects/icecube"}
 export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/hpss_queue"}
 export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/retriever.log"}
 export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/globus_queue"}

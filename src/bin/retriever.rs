@@ -26,6 +26,7 @@ fn main() {
     info!("tacc-sync v{} - retriever starting", VERSION);
 
     // load configuration from environment
+    let hpss_base_path = std::env::var("HPSS_BASE_PATH").expect("HPSS_BASE_PATH environment variable not set");
     let inbox_dir = std::env::var("INBOX_DIR").expect("INBOX_DIR environment variable not set");
     let outbox_dir = std::env::var("OUTBOX_DIR").expect("OUTBOX_DIR environment variable not set");
     let pid_path = std::env::var("PID_PATH").expect("PID_PATH environment variable not set");
@@ -64,7 +65,7 @@ fn main() {
                     break;
                 }
                 // process the work
-                if process_work(&work, &PathBuf::from(&transfer_dir), &PathBuf::from(&semaphore_dir)) {
+                if process_work(&work, &hpss_base_path, &PathBuf::from(&transfer_dir), &PathBuf::from(&semaphore_dir)) {
                     move_to_outbox(json_file, &PathBuf::from(&outbox_dir));
                 } else {
                     move_to_outbox(json_file, &PathBuf::from(&quarantine_dir));
@@ -91,16 +92,12 @@ fn main() {
 
 fn process_work(
     work: &TaccSyncWork,
+    hpss_base_path: &str,
     transfer_dir: &PathBuf,
     semaphore_dir: &PathBuf
 ) -> bool {
     // log about what we're processing
     info!("Retrieving files for {}: {} ({} files - {} bytes)", work.work_id, work.tape, work.files.len(), work.size);
-
-    // create the directory in the transfer buffer
-    let hpss_out_dir = transfer_dir.join(format!("{}", work.work_id));
-    info!("Creating transfer buffer directory: {}", hpss_out_dir.display());
-    fs::create_dir_all(&hpss_out_dir).expect("Unable to create output directory in transfer buffer");
 
     // create a temporary file we can feed to hsi
     let file_name = Uuid::new_v4().to_string();
@@ -111,8 +108,17 @@ fn process_work(
 
     // we batch the hsi copy commands into the file
     for file in &work.files {
-        let output_path = hpss_out_dir.join(&file.file_name);
+        // determine where the file lives in HPSS
         let hpss_path = &file.hpss_path;
+        // determine where we want the disk copy to go
+        let start_index = hpss_base_path.len();
+        let data_warehouse_path = &hpss_path[start_index + 1..];
+        let output_path = transfer_dir.join(data_warehouse_path);
+        // create the directory in the transfer buffer
+        let output_parent = output_path.parent().expect("Unable to determine disk location for HPSS file");
+        info!("Creating transfer buffer directory: {}", output_parent.display());
+        fs::create_dir_all(&output_parent).expect("Unable to create output directory in transfer buffer");
+        // write the command to the hsi batch file
         // get      get a file from hpss
         // -c on    turn on checksums
         // -C       purge the file from hpss disk cache; we'll only read it just the once to put it on icecube disk
