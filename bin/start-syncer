@@ -21,7 +21,7 @@ export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/synce
 export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
 export RUST_LOG=${RUST_LOG:="trace"}
 export SEMAPHORE_DIR=${SEMAPHORE_DIR:="${TACC_SYNC_WORK_ROOT}/semaphore"}
-export WORK_DIR=${WORK_DIR:="${TACC_SYNC_WORK_ROOT}/hpss_queue"}
+export WORK_DIR=${WORK_DIR:="${TACC_SYNC_WORK_ROOT}/checksum_queue"}
 export WORK_SLEEP_SECONDS=${WORK_SLEEP_SECONDS:="3600"}  # 1 hour
 
 # if we've already got a .pid file, then bail out

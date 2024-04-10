@@ -12,5 +12,11 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-# don't check in test data from the workspace
+# Patrick development ergonomics
+/suru
+
+# project specific
+/env
+/keycloak-client-secret
+/slurm-logs
 /work

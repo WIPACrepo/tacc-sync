@@ -1,0 +1,10 @@
+aiohttp==3.8.4
+aiomysql==0.1.1
+flask==2.3.2
+PyMySQL==1.0.2
+prometheus-client==0.16.0
+protobuf >= 3.13.0, < 4.0
+python-dateutil==2.8.2
+slack-sdk==3.21.3
+# wipac-file-catalog-indexer==2.0.1
+wipac-rest-tools
