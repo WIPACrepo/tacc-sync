@@ -19,6 +19,15 @@ pub struct HpssFile {
     pub tape_offset: u64,
 }
 
+/// TaccSyncChecksum represents checksums for a file
+#[derive(Debug, Deserialize, Serialize)]
+pub struct TaccSyncChecksum {
+    /// the adler32 checksum of the file
+    pub adler32: String,
+    /// the sha512 checksum of the file
+    pub sha512: String,
+}
+
 /// TaccSyncFile represents a file to synchronize from NERSC to TACC
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TaccSyncFile {
@@ -34,6 +43,8 @@ pub struct TaccSyncFile {
     pub tape_offset: u64,
     /// the Globus task id for transferring this file, if created
     pub globus_task_id: Option<Uuid>,
+    /// the checksums for this file, may not always be present
+    pub checksum: Option<TaccSyncChecksum>,
 }
 
 /// TaccSyncRequest represents a request to synchronize files from NERSC to TACC
@@ -180,7 +191,7 @@ pub fn load_work_from_file(file_path: &PathBuf) -> Result<TaccSyncWork> {
 /// # Returns
 ///
 /// A `Result` indicating success or failure.
-pub fn move_to_outbox(file_path: &PathBuf, dest_dir: &PathBuf) {
+pub fn move_to_outbox(file_path: &PathBuf, dest_dir: &PathBuf) -> PathBuf {
     // if we can get the file name of the source file
     if let Some(file_name) = file_path.file_name() {
         // construct the destination path by appending the file name to the destination directory
@@ -194,7 +205,7 @@ pub fn move_to_outbox(file_path: &PathBuf, dest_dir: &PathBuf) {
                 error!("Error: {}", e);
                 panic!("FULL STOP -- Failed to perform basic but critical file system operation")
             },
-            _ => return
+            _ => return dest_path
         }
     }
 

@@ -18,6 +18,7 @@ fi
 mkdir -p "${TACC_SYNC_WORK_ROOT}/checksum_queue"
 mkdir -p "${TACC_SYNC_WORK_ROOT}/finished"
 mkdir -p "${TACC_SYNC_WORK_ROOT}/globus_queue"
+mkdir -p "${TACC_SYNC_WORK_ROOT}/hpss_progress"
 mkdir -p "${TACC_SYNC_WORK_ROOT}/hpss_queue"
 mkdir -p "${TACC_SYNC_WORK_ROOT}/inbox"
 mkdir -p "${TACC_SYNC_WORK_ROOT}/log"
@@ -32,6 +33,7 @@ mkdir -p "${TACC_SYNC_WORK_ROOT}/quarantine/verifier"
 mkdir -p "${TACC_SYNC_WORK_ROOT}/reaper_queue"
 mkdir -p "${TACC_SYNC_WORK_ROOT}/request_queue"
 mkdir -p "${TACC_SYNC_WORK_ROOT}/semaphore"
+mkdir -p "${TACC_SYNC_WORK_ROOT}/verify_progress"
 mkdir -p "${TACC_SYNC_WORK_ROOT}/verify_queue"
 
 # create the tacc-sync SLURM log directory under TACC_SYNC_ROOT

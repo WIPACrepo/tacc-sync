@@ -10,7 +10,8 @@ use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 use tacc_sync::{
-    boolify, clean_up_and_exit, find_json_files_in_directory, load_request_from_file, move_to_outbox, HpssFile, TaccSyncFile, TaccSyncRequest, TaccSyncWork
+    boolify, clean_up_and_exit, find_json_files_in_directory, load_request_from_file,
+    move_to_outbox, HpssFile, TaccSyncFile, TaccSyncRequest, TaccSyncWork
 };
 use uuid::Uuid;
 
@@ -289,6 +290,7 @@ fn generate_work_units(request: &TaccSyncRequest, tape_groups: &Vec<Vec<HpssFile
                 tape_num: hpss_file.tape_num,
                 tape_offset: hpss_file.tape_offset,
                 globus_task_id: None,
+                checksum: None,
             });
         }
 
