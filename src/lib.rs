@@ -200,16 +200,15 @@ pub fn move_to_outbox(file_path: &PathBuf, dest_dir: &PathBuf) -> PathBuf {
         info!("Moving {} to {}", file_path.display(), dest_path.display());
         match fs::rename(&file_path, &dest_path) {
             Err(e) => {
-                // if we can't move a file, better to stop immediately
+                // if we can't move the file, log and move on
                 error!("Unable to rename: Unable to move {} to {}", file_path.display(), dest_dir.display());
                 error!("Error: {}", e);
-                panic!("FULL STOP -- Failed to perform basic but critical file system operation")
             },
             _ => return dest_path
         }
     }
 
-    // if we can't move a file, better to stop immediately
+    // if we can't get the file_name, this is some bad mojo
     error!("Missing file_name: Unable to move {} to {}", file_path.display(), dest_dir.display());
     panic!("FULL STOP -- Failed to perform basic but critical file system operation")
 }

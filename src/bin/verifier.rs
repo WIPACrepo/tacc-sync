@@ -94,7 +94,11 @@ fn process_work(
     info!("Verifying files for {}: {} ({} files - {} bytes)", work.work_id, work.tape, work.files.len(), work.size);
 
     // for each file in the work unit
+    let mut index = 0;
     for file in &work.files {
+        // log about what we're processing
+        index = index + 1;
+        info!("Processing {}/{}: {}", index, work.files.len(), file.file_name);
         // determine the sha512 checksum of the file
         let checksum = file.checksum.as_ref().ok_or(anyhow::anyhow!("missing checksums"))?;
         let sha512 = &checksum.sha512;
@@ -118,6 +122,7 @@ fn process_work(
 
 fn verify_checksum(output_path: PathBuf, expected_sha512: &str) -> Result<bool> {
     // run the sha512sum command to calculate the file's checksum
+    info!("Running command: sha512sum {}", output_path.display());
     let output = Command::new("sha512sum")
         .arg(output_path)
         .output()?;
