@@ -182,6 +182,7 @@ pub fn load_work_from_file(file_path: &PathBuf) -> Result<TaccSyncWork> {
 }
 
 /// Moves the provided file to the provided destination directory.
+/// Operates on a best-effort basis; if we fail, we log and move on.
 ///
 /// # Arguments
 ///
@@ -190,7 +191,7 @@ pub fn load_work_from_file(file_path: &PathBuf) -> Result<TaccSyncWork> {
 ///
 /// # Returns
 ///
-/// A `Result` indicating success or failure.
+/// A `PathBuf` indicating the destination path.
 pub fn move_to_outbox(file_path: &PathBuf, dest_dir: &PathBuf) -> PathBuf {
     // if we can get the file name of the source file
     if let Some(file_name) = file_path.file_name() {
@@ -210,5 +211,5 @@ pub fn move_to_outbox(file_path: &PathBuf, dest_dir: &PathBuf) -> PathBuf {
 
     // if we can't get the file_name, this is some bad mojo
     error!("Missing file_name: Unable to move {} to {}", file_path.display(), dest_dir.display());
-    panic!("FULL STOP -- Failed to perform basic but critical file system operation")
+    file_path.to_path_buf()
 }
