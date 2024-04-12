@@ -1,9 +1,9 @@
 // lib.rs
 
+use anyhow::Result;
 use chrono::{DateTime, Utc};
 use log::{error, info};
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
 use std::fs::{self, File};
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -157,9 +157,9 @@ pub fn find_json_files_in_directory(dir_path: &str) -> Vec<PathBuf> {
 ///
 /// Result containing a TaccSyncRequest object if loading was successful.
 pub fn load_request_from_file(file_path: &PathBuf) -> Result<TaccSyncRequest> {
-    let mut file = File::open(file_path).expect("file not found");
+    let mut file = File::open(file_path)?; // .expect("file not found");
     let mut contents = String::new();
-    file.read_to_string(&mut contents).expect("something went wrong reading the file");
+    file.read_to_string(&mut contents)?; // .expect("something went wrong reading the file");
     let r: TaccSyncRequest = serde_json::from_str(&contents)?;
     Ok(r)
 }
@@ -174,9 +174,9 @@ pub fn load_request_from_file(file_path: &PathBuf) -> Result<TaccSyncRequest> {
 ///
 /// Result containing a TaccSyncWork object if loading was successful.
 pub fn load_work_from_file(file_path: &PathBuf) -> Result<TaccSyncWork> {
-    let mut file = File::open(file_path).expect("file not found");
+    let mut file = File::open(file_path)?; // .expect("file not found");
     let mut contents = String::new();
-    file.read_to_string(&mut contents).expect("something went wrong reading the file");
+    file.read_to_string(&mut contents)?; // .expect("something went wrong reading the file");
     let r: TaccSyncWork = serde_json::from_str(&contents)?;
     Ok(r)
 }

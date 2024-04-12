@@ -1,5 +1,6 @@
 // retriever.rs
 
+use anyhow::Result;
 use log::{debug, error, info};
 use std::fs::{self, File};
 use std::io::{BufWriter, Write};
@@ -16,6 +17,9 @@ use walkdir::WalkDir;
 
 /// the process exit code indicating successful exit
 const EXIT_SUCCESS: i32 = 0;
+
+/// the constant meaning unlimited space is available
+const UNLIMITED_SPACE: u64 = 0;
 
 /// the version of the package being compiled
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
@@ -35,6 +39,7 @@ fn main() {
     let semaphore_dir = std::env::var("SEMAPHORE_DIR").expect("SEMAPHORE_DIR environment variable not set");
     let transfer_dir = std::env::var("TRANSFER_DIR").expect("TRANSFER_DIR environment variable not set");
     let transfer_quota = std::env::var("TRANSFER_QUOTA").expect("TRANSFER_QUOTA environment variable not set");
+    let work_dir = std::env::var("WORK_DIR").expect("WORK_DIR environment variable not set");
     let work_sleep_seconds = std::env::var("WORK_SLEEP_SECONDS").expect("WORK_SLEEP_SECONDS environment variable not set");
 
     let space_allowed = transfer_quota.parse::<u64>().expect("TRANSFER_QUOTA environment variable must be an integer");
@@ -55,20 +60,31 @@ fn main() {
         for (index, json_file) in json_files.iter().enumerate() {
             let json_file_str = json_file.as_path().display();
             info!("Processing {}/{}: {}", index+1, num_files, json_file_str);
+
             // if we are able to load the work from the file
             if let Ok(work) = load_work_from_file(json_file) {
-                // determine if there is enough space in the transfer buffer
-                let space_required = calculate_directory_size(&PathBuf::from(&transfer_dir)) + work.size;
-                if space_required > space_allowed {
-                    info!("Transfer buffer is full: {} bytes needed > {} bytes allowed", space_required, space_allowed);
-                    info!("Will STOP processing work until the next cycle.");
-                    break;
+                // if we have to worry about disk quota
+                if space_allowed != UNLIMITED_SPACE {
+                    // determine if there is enough space in the transfer buffer
+                    let space_required = calculate_directory_size(&PathBuf::from(&transfer_dir)) + work.size;
+                    if space_required > space_allowed {
+                        info!("Transfer buffer is full: {} bytes needed > {} bytes allowed", space_required, space_allowed);
+                        info!("Will STOP processing work until the next cycle.");
+                        break;
+                    }
                 }
+
+                // move the work unit to the work directory
+                let work_file = move_to_outbox(json_file, &PathBuf::from(&work_dir));
                 // process the work
-                if process_work(&work, &hpss_base_path, &PathBuf::from(&transfer_dir), &PathBuf::from(&semaphore_dir)) {
-                    move_to_outbox(json_file, &PathBuf::from(&outbox_dir));
-                } else {
-                    move_to_outbox(json_file, &PathBuf::from(&quarantine_dir));
+                match process_work(&work, &hpss_base_path, &PathBuf::from(&transfer_dir), &PathBuf::from(&semaphore_dir)) {
+                    Ok(_) => {
+                        move_to_outbox(&work_file, &PathBuf::from(&outbox_dir));
+                    },
+                    Err(e) => {
+                        error!("Error processing work: {}", e);
+                        move_to_outbox(&work_file, &PathBuf::from(&quarantine_dir));
+                    }
                 }
             }
             // we weren't able to load the sync request
@@ -95,7 +111,7 @@ fn process_work(
     hpss_base_path: &str,
     transfer_dir: &PathBuf,
     semaphore_dir: &PathBuf
-) -> bool {
+) -> Result<()> {
     // log about what we're processing
     info!("Retrieving files for {}: {} ({} files - {} bytes)", work.work_id, work.tape, work.files.len(), work.size);
 
@@ -120,13 +136,12 @@ fn process_work(
         fs::create_dir_all(&output_parent).expect("Unable to create output directory in transfer buffer");
         // write the command to the hsi batch file
         // get      get a file from hpss
-        // -c on    turn on checksums
         // -C       purge the file from hpss disk cache; we'll only read it just the once to put it on icecube disk
         // -P       preserve timestamps as recorded in hpss
         // {}       the place where we want to put the file on disk
         // :        gotta love good ol hsi
         // {}       the place where the file is stored in hpss
-        writeln!(writer, "get -c on -C -P {} : {}", output_path.display(), hpss_path).expect("Unable to write to hsi batch temporary file");
+        writeln!(writer, "get -C -P {} : {}", output_path.display(), hpss_path).expect("Unable to write to hsi batch temporary file");
     }
     writer.flush().expect("Unable to close hsi batch temporary file");
 
@@ -148,7 +163,7 @@ fn process_work(
     debug!("{}", stdout);
 
     // tell the caller that we succeeded
-    return true
+    Ok(())
 }
 
 /// Calculate the total size of files in a directory and its subdirectories.
