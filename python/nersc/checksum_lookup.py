@@ -120,7 +120,7 @@ async def lookup_work_unit(context: Context, work_unit_path: str, work_unit: Wor
         file_name = file['file_name']
         LOG.info(f"Processing {count}/{len(files)}: {file_name}")
         # if we've already got a checksum, skip this file
-        if "checksum" in file:
+        if "checksum" in file and file["checksum"] is not None:
             LOG.warn(f"File {file_name} already has checksum: {file['checksum']}")
             continue
         # since we don't have a checksum, we need to look it up
