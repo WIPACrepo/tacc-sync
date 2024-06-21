@@ -17,18 +17,17 @@ EXPECTED_CONFIG: KeySpec = {
     "JOB_TIME_MIN": "6:00:00",
     "LOG_LEVEL": "DEBUG",
     "LOG_PATH": "/global/homes/i/icecubed/tacc-sync/nersc_controller.log",
-    "LTA_BIN_DIR": "/global/homes/i/icecubed/tacc-sync/bin",
     "SACCT_PATH": "/usr/bin/sacct",
     "SBATCH_PATH": "/usr/bin/sbatch",
     "SLURM_LOG_DIR": "/global/homes/i/icecubed/tacc-sync/slurm-logs",
     "SQUEUE_PATH": "/usr/bin/squeue",
+    "TACC_SYNC_BIN_DIR": "/global/homes/i/icecubed/tacc-sync/bin",
 }
 
 # HSI_JOBS is a list of jobs that use the HPSS tape system;
 # NERSC limits the number of jobs that can use HSI concurrently
 HSI_JOBS = [
-    "pipe0-nersc-mover",
-    "pipe0-nersc-verifier"
+    "start-retriever",
 ]
 
 # JOB_LIMITS sets a limit on the maximum number of active jobs
@@ -36,12 +35,17 @@ HSI_JOBS = [
 # jobs that access the HPSS tape system (`hsi`) and the total number
 # of jobs in the slurm queue at one time (`total`)
 JOB_LIMITS = {
-    "hsi": 10,
-    "pipe0-nersc-deleter": 2,
-    "pipe0-nersc-mover": 10,
-    "pipe0-nersc-verifier": 10,
-    "pipe0-site-move-verifier": 10,
-    "total": 15,
+    # overal job limits
+    "total": 1,
+    "hsi": 5,
+    # job type limits
+    "start-checksum-lookup": 0,
+    "start-finisher": 0,
+    "start-globus-xfer": 0,
+    "start-reaper": 0,
+    "start-retriever": 5,
+    "start-syncer": 0,
+    "start-verifier": 0,
 }
 
 # JOB_PRIORITY indicates a priority order for job types when creating
@@ -49,10 +53,13 @@ JOB_LIMITS = {
 # later stages without work will terminate quickly, while later stages
 # that have work must run in order to prevent starvation.
 JOB_PRIORITY = [
-    "pipe0-nersc-deleter",
-    "pipe0-nersc-verifier",
-    "pipe0-nersc-mover",
-    "pipe0-site-move-verifier",
+    "start-finisher",
+    "start-reaper",
+    "start-globus-xfer",
+    "start-verifier",
+    "start-retriever",
+    "start-checksum-lookup",
+    "start-syncer",
 ]
 
 # JOB_STATES are the states of a job in the slurm queue that count as
@@ -84,9 +91,9 @@ def add_job_to_slurm_queue(context: Context, name: str) -> None:
     LOG.info(f"Scheduling job type '{name}' in the slurm queue")
     job_time = context["JOB_TIME"]
     job_time_min = context["JOB_TIME_MIN"]
-    lta_bin_dir = context["LTA_BIN_DIR"]
     sbatch_path = context["SBATCH_PATH"]
     slurm_log_dir = context["SLURM_LOG_DIR"]
+    tacc_sync_bin_dir = context["TACC_SYNC__BIN_DIR"]
 
     # run the sacct command to determine our jobs currently running in the slurm queue
     #     sbatch_path            The path to the 'sbatch' command
@@ -96,7 +103,7 @@ def add_job_to_slurm_queue(context: Context, name: str) -> None:
     #     --time=HH:MM:SS        Time limit for the job
     #     --time-min=HH:MM:SS    Minimum time for the job
     #     name.sh                The script to be run in the slurm queue
-    args = [sbatch_path, "--account=m1093", f"--output={slurm_log_dir}/slurm-{name}-%j.out", "--qos=xfer", f"--time={job_time}", f"--time-min={job_time_min}", f"{lta_bin_dir}/{name}.sh"]
+    args = [sbatch_path, "--account=m1093", f"--output={slurm_log_dir}/slurm-{name}-%j.out", "--qos=xfer", f"--time={job_time}", f"--time-min={job_time_min}", f"{tacc_sync_bin_dir}/{name}"]
     LOG.info(f"Running command: {args}")
     completed_process = run(args, stdout=PIPE, stderr=PIPE)
 
@@ -180,42 +187,6 @@ async def do_work(context: Context) -> None:
     LOG.debug("All done checking slurm and scheduling jobs.")
 
 
-# def get_active_jobs(context: Context) -> JsonObj:
-#     """Check the slurm queue for currently running jobs."""
-#     LOG.info("Checking slurm queue for currently running jobs")
-#     sacct_path = context["SACCT_PATH"]
-
-#     # run the sacct command to determine our jobs currently running in the slurm queue
-#     #     sacct_path             The path to the 'sacct' command
-#     #     --account=m1093        IceCube's project (m1093) at NERSC
-#     #     --json                 Please give me the output in JSON format (easy to parse)
-#     #     --state=PD,R,RQ,RS,S   Give me the jobs in the following states:
-#     #                                PD = PENDING
-#     #                                R  = RUNNING
-#     #                                RQ = REQUEUED
-#     #                                RS = RESIZING
-#     #                                S  = SUSPENDED
-#     args = [sacct_path, "--account=m1093", "--json", "--state=PD,R,RQ,RS,S"]
-#     LOG.info(f"Running command: {args}")
-#     completed_process = run(args, stdout=PIPE, stderr=PIPE)
-
-#     # if our command failed
-#     if completed_process.returncode != 0:
-#         LOG.error("Command to check the slurm queue failed")
-#         LOG.info(f"Command: {completed_process.args}")
-#         LOG.info(f"returncode: {completed_process.returncode}")
-#         LOG.info(f"stdout: {str(completed_process.stdout)}")
-#         LOG.info(f"stderr: {str(completed_process.stderr)}")
-#         raise FailedCommandException(f"{completed_process.args}")
-
-#     # otherwise, we succeeded; output is on stdout
-#     # {"jobs": [{ ... }, { ... }]}
-#     result = completed_process.stdout.decode("utf-8")
-#     sacct_output = json.loads(result)
-
-#     return cast(JsonObj, sacct_output)
-
-
 def get_active_jobs(context: Context) -> JsonObj:
     """Check the slurm queue for currently running jobs."""
     LOG.info("Checking slurm queue for currently running jobs")
@@ -283,11 +254,11 @@ def main_sync() -> None:
         "JOB_TIME_MIN": cast(str, config["JOB_TIME_MIN"]),
         "LOG_LEVEL": cast(str, config["LOG_LEVEL"]),
         "LOG_PATH": cast(str, config["LOG_PATH"]),
-        "LTA_BIN_DIR": cast(str, config["LTA_BIN_DIR"]),
         "SACCT_PATH": cast(str, config["SACCT_PATH"]),
         "SBATCH_PATH": cast(str, config["SBATCH_PATH"]),
         "SLURM_LOG_DIR": cast(str, config["SLURM_LOG_DIR"]),
         "SQUEUE_PATH": cast(str, config["SQUEUE_PATH"]),
+        "TACC_SYNC_BIN_DIR": cast(str, config["TACC_SYNC_BIN_DIR"]),
     }
 
     asyncio.run(main(context))
@@ -296,5 +267,4 @@ def main_sync() -> None:
 
 
 if __name__ == '__main__':
-    # main_sync()
-    LOG.info("tacc-sync controller script begin/end")
+    main_sync()
