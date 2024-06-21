@@ -98,13 +98,13 @@ def add_job_to_slurm_queue(context: Context, name: str) -> None:
     # run the sacct command to determine our jobs currently running in the slurm queue
     #     sbatch_path            The path to the 'sbatch' command
     #     --account=m1093        IceCube's project (m1093) at NERSC
-    #     --constraint=cpu       We don't need no stinkin' GPUs
+    #     --constraint=cron      "Requested policies require the cron architecture, but you have requested cpu. Rejecting request."
     #     --output=slurm.log     The log file used by the job
     #     --qos=xfer             Add the job to the xfer queue
     #     --time=HH:MM:SS        Time limit for the job
     #     --time-min=HH:MM:SS    Minimum time for the job
     #     name.sh                The script to be run in the slurm queue
-    args = [sbatch_path, "--account=m1093", "--constraint=cpu", f"--output={slurm_log_dir}/slurm-{name}-%j.out", "--qos=xfer", f"--time={job_time}", f"--time-min={job_time_min}", f"{tacc_sync_bin_dir}/{name}"]
+    args = [sbatch_path, "--account=m1093", "--constraint=cron", f"--output={slurm_log_dir}/slurm-{name}-%j.out", "--qos=xfer", f"--time={job_time}", f"--time-min={job_time_min}", f"{tacc_sync_bin_dir}/{name}"]
     LOG.info(f"Running command: {args}")
     completed_process = run(args, stdout=PIPE, stderr=PIPE)
 
