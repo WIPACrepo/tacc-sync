@@ -38,8 +38,10 @@ if [[ -f $PID_PATH ]]; then
 fi
 
 # start the Retriever component
-echo "Starting Retriever component"
+echo "Starting Retriever component with PID_PATH: ${PID_PATH}"
 ${TACC_SYNC_ROOT}/target/release/retriever 2>>${LOG_PATH} &
+echo "Retriever component has been started"
 
 # capture the process ID of the component
+echo "Capturing PID at ${PID_PATH}"
 echo $! >$PID_PATH
