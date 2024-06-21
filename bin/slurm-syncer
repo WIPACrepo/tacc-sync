@@ -11,6 +11,7 @@ export HSI_BASE_PATH=${HSI_BASE_PATH:="/home/projects/icecube"}
 export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/inbox"}
 # export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/syncer.log"}
 export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/request_queue"}
+export PID_PATH=${PID_PATH:="${TACC_SYNC_WORK_ROOT}/semaphore/slurm-syncer.pid"}
 export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/syncer"}
 export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
 export RUST_LOG=${RUST_LOG:="trace"}

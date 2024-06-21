@@ -26,6 +26,7 @@ export TACC_BASE_PATH=${TACC_BASE_PATH:="/stornext/ranch_01/ranch/projects/TG-PH
 export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/globus_queue"}
 # export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/globus_xfer.log"}
 export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/reaper_queue"}
+export PID_PATH=${PID_PATH:="${TACC_SYNC_WORK_ROOT}/semaphore/slurm-globus-xfer.pid"}
 export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/globus_xfer"}
 export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
 export RUST_LOG=${RUST_LOG:="trace"}

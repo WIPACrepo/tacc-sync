@@ -13,6 +13,7 @@ export HPSS_BASE_PATH=${HPSS_BASE_PATH:="/home/projects/icecube"}
 export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/hpss_queue"}
 # export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/retriever-$(hostname -s)-${PROC_ID}.log"}
 export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/verify_queue"}
+export PID_PATH=${PID_PATH:="${TACC_SYNC_WORK_ROOT}/semaphore/slurm-retriever.pid"}
 export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/retriever"}
 export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
 export RUST_LOG=${RUST_LOG:="trace"}

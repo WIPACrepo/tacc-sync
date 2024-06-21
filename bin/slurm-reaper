@@ -10,6 +10,7 @@ export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="${HOME}/tacc-sync/work"}
 export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/reaper_queue"}
 # export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/reaper.log"}
 export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/finished"}
+export PID_PATH=${PID_PATH:="${TACC_SYNC_WORK_ROOT}/semaphore/slurm-reaper.pid"}
 export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/reaper"}
 export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
 export RUST_LOG=${RUST_LOG:="trace"}

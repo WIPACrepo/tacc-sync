@@ -12,6 +12,7 @@ export HPSS_DIR=${HPSS_DIR:="${TACC_SYNC_WORK_ROOT}/hpss_queue"}
 export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/request_queue"}
 # export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/finisher.log"}
 export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/finished"}
+export PID_PATH=${PID_PATH:="${TACC_SYNC_WORK_ROOT}/semaphore/slurm-finisher.pid"}
 export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/finisher"}
 export REAPER_DIR=${REAPER_DIR:="${TACC_SYNC_WORK_ROOT}/reaper_queue"}
 export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
