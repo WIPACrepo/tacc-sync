@@ -8,7 +8,7 @@ export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="${HOME}/tacc-sync/work"}
 
 # component configuration
 export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/reaper_queue"}
-export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/reaper.log"}
+# export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/reaper.log"}
 export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/finished"}
 export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/reaper"}
 export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
@@ -18,4 +18,4 @@ export TRANSFER_DIR=${TRANSFER_DIR:="${TACC_SYNC_DATA_ROOT}"}
 export WORK_SLEEP_SECONDS=${WORK_SLEEP_SECONDS:="3600"}  # 1 hour
 
 # start the Reaper component
-${TACC_SYNC_ROOT}/target/release/reaper 2>>${LOG_PATH}
+${TACC_SYNC_ROOT}/target/release/reaper

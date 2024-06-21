@@ -10,7 +10,7 @@ export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="${HOME}/tacc-sync/work"}
 export GLOBUS_DIR=${GLOBUS_DIR:="${TACC_SYNC_WORK_ROOT}/globus_queue"}
 export HPSS_DIR=${HPSS_DIR:="${TACC_SYNC_WORK_ROOT}/hpss_queue"}
 export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/request_queue"}
-export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/finisher.log"}
+# export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/finisher.log"}
 export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/finished"}
 export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/finisher"}
 export REAPER_DIR=${REAPER_DIR:="${TACC_SYNC_WORK_ROOT}/reaper_queue"}
@@ -19,4 +19,4 @@ export RUST_LOG=${RUST_LOG:="trace"}
 export WORK_SLEEP_SECONDS=${WORK_SLEEP_SECONDS:="3600"}  # 1 hour
 
 # start the Finisher component
-${TACC_SYNC_ROOT}/target/release/finisher 2>>${LOG_PATH}
+${TACC_SYNC_ROOT}/target/release/finisher

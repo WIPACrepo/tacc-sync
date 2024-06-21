@@ -11,7 +11,7 @@ export PROC_ID="$(openssl rand -hex 12)"
 
 export HPSS_BASE_PATH=${HPSS_BASE_PATH:="/home/projects/icecube"}
 export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/verify_queue"}
-export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/verifier-$(hostname -s)-${PROC_ID}.log"}
+# export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/verifier-$(hostname -s)-${PROC_ID}.log"}
 export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/globus_queue"}
 export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/verifier"}
 export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
@@ -21,4 +21,4 @@ export WORK_DIR=${WORK_DIR:="${TACC_SYNC_WORK_ROOT}/verify_progress"}
 export WORK_SLEEP_SECONDS=${WORK_SLEEP_SECONDS:="3600"}  # 1 hour
 
 # start the Verifier component
-${TACC_SYNC_ROOT}/target/release/verifier 2>>${LOG_PATH}
+${TACC_SYNC_ROOT}/target/release/verifier

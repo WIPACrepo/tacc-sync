@@ -9,7 +9,7 @@ export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="${HOME}/tacc-sync/work"}
 # component configuration
 export HSI_BASE_PATH=${HSI_BASE_PATH:="/home/projects/icecube"}
 export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/inbox"}
-export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/syncer.log"}
+# export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/syncer.log"}
 export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/request_queue"}
 export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/syncer"}
 export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
@@ -19,4 +19,4 @@ export WORK_DIR=${WORK_DIR:="${TACC_SYNC_WORK_ROOT}/checksum_queue"}
 export WORK_SLEEP_SECONDS=${WORK_SLEEP_SECONDS:="3600"}  # 1 hour
 
 # start the Syncer component
-${TACC_SYNC_ROOT}/target/release/syncer 2>>${LOG_PATH}
+${TACC_SYNC_ROOT}/target/release/syncer
