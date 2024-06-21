@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# slurm-retriever
+
+# application configuration (Production)
+export TACC_SYNC_DATA_ROOT=${TACC_SYNC_DATA_ROOT:="${CFS}/icecubed/tacc-sync"}
+export TACC_SYNC_ROOT=${TACC_SYNC_ROOT:="${HOME}/tacc-sync"}
+export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="${HOME}/tacc-sync/work"}
+
+# component configuration
+export PROC_ID="$(openssl rand -hex 12)"
+
+export HPSS_BASE_PATH=${HPSS_BASE_PATH:="/home/projects/icecube"}
+export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/hpss_queue"}
+export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/retriever-$(hostname -s)-${PROC_ID}.log"}
+export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/verify_queue"}
+export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/retriever"}
+export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
+export RUST_LOG=${RUST_LOG:="trace"}
+export SEMAPHORE_DIR=${SEMAPHORE_DIR:="${TACC_SYNC_WORK_ROOT}/semaphore"}
+export TRANSFER_DIR=${TRANSFER_DIR:="${TACC_SYNC_DATA_ROOT}"}
+# export TRANSFER_QUOTA=${TRANSFER_QUOTA:="500000000000000"}  # 500 TB
+export TRANSFER_QUOTA=${TRANSFER_QUOTA:="0"}  # 0 = Unlimited
+export WORK_DIR=${WORK_DIR:="${TACC_SYNC_WORK_ROOT}/hpss_progress"}
+export WORK_SLEEP_SECONDS=${WORK_SLEEP_SECONDS:="3600"}  # 1 hour
+
+# start the Retriever component
+${TACC_SYNC_ROOT}/target/release/retriever 2>>${LOG_PATH}

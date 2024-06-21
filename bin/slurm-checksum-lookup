@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# slurm-checksum-lookup
+
+# application configuration (Production)
+export TACC_SYNC_DATA_ROOT=${TACC_SYNC_DATA_ROOT:="${CFS}/icecubed/tacc-sync"}
+export TACC_SYNC_ROOT=${TACC_SYNC_ROOT:="${HOME}/tacc-sync"}
+export TACC_SYNC_WORK_ROOT=${TACC_SYNC_WORK_ROOT:="${HOME}/tacc-sync/work"}
+
+# source our Python environment
+cd ${TACC_SYNC_ROOT}
+source env/bin/activate
+
+# component configuration
+export AUTH_OPENID_URL=${AUTH_OPENID_URL:="https://keycloak.icecube.wisc.edu/auth/realms/IceCube"}
+export CLIENT_ID=${CLIENT_ID:="long-term-archive"}
+export CLIENT_SECRET=${CLIENT_SECRET:="$(<keycloak-client-secret)"}
+export FILE_CATALOG_REST_URL=${FILE_CATALOG_REST_URL:="https://file-catalog.icecube.wisc.edu"}
+export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/checksum_queue"}
+export LOG_LEVEL=${LOG_LEVEL:="DEBUG"}
+export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/checksum_lookup.log"}
+export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/hpss_queue"}
+export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/checksum_lookup"}
+export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
+export SEMAPHORE_DIR=${SEMAPHORE_DIR:="${TACC_SYNC_WORK_ROOT}/semaphore"}
+export WORK_SLEEP_SECONDS=${WORK_SLEEP_SECONDS:="3600"}  # 1 hour
+
+# start the Checksum-Lookup component
+python3 python/nersc/checksum_lookup.py

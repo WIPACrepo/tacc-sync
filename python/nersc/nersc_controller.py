@@ -27,7 +27,7 @@ EXPECTED_CONFIG: KeySpec = {
 # HSI_JOBS is a list of jobs that use the HPSS tape system;
 # NERSC limits the number of jobs that can use HSI concurrently
 HSI_JOBS = [
-    "start-retriever",
+    "slurm-retriever",
 ]
 
 # JOB_LIMITS sets a limit on the maximum number of active jobs
@@ -39,13 +39,13 @@ JOB_LIMITS = {
     "total": 1,
     "hsi": 5,
     # job type limits
-    "start-checksum-lookup": 0,
-    "start-finisher": 0,
-    "start-globus-xfer": 0,
-    "start-reaper": 0,
-    "start-retriever": 5,
-    "start-syncer": 0,
-    "start-verifier": 0,
+    "slurm-checksum-lookup": 0,
+    "slurm-finisher": 0,
+    "slurm-globus-xfer": 0,
+    "slurm-reaper": 0,
+    "slurm-retriever": 5,
+    "slurm-syncer": 0,
+    "slurm-verifier": 0,
 }
 
 # JOB_PRIORITY indicates a priority order for job types when creating
@@ -53,13 +53,13 @@ JOB_LIMITS = {
 # later stages without work will terminate quickly, while later stages
 # that have work must run in order to prevent starvation.
 JOB_PRIORITY = [
-    "start-finisher",
-    "start-reaper",
-    "start-globus-xfer",
-    "start-verifier",
-    "start-retriever",
-    "start-checksum-lookup",
-    "start-syncer",
+    "slurm-finisher",
+    "slurm-reaper",
+    "slurm-globus-xfer",
+    "slurm-verifier",
+    "slurm-retriever",
+    "slurm-checksum-lookup",
+    "slurm-syncer",
 ]
 
 # JOB_STATES are the states of a job in the slurm queue that count as
@@ -98,7 +98,7 @@ def add_job_to_slurm_queue(context: Context, name: str) -> None:
     # run the sacct command to determine our jobs currently running in the slurm queue
     #     sbatch_path            The path to the 'sbatch' command
     #     --account=m1093        IceCube's project (m1093) at NERSC
-    #     --constraint=cron      "Requested policies require the cron architecture, but you have requested cpu. Rejecting request."
+    #     --constraint=cron      NERSC SLURM requires 'cron' architecture
     #     --output=slurm.log     The log file used by the job
     #     --qos=xfer             Add the job to the xfer queue
     #     --time=HH:MM:SS        Time limit for the job
