@@ -15,4 +15,4 @@ export SBATCH_PATH=${SBATCH_PATH:="/usr/bin/sbatch"}
 export SLURM_LOG_DIR=${SLURM_LOG_DIR:="${HOME}/tacc-sync/slurm-logs"}
 export SQUEUE_PATH=${SQUEUE_PATH:="/usr/bin/squeue"}
 export TACC_SYNC_BIN_DIR=${TACC_SYNC_BIN_DIR:="${HOME}/tacc-sync/bin"}
-python3 nersc_controller.py
+python3 python/nersc/nersc_controller.py
