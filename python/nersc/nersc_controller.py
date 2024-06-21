@@ -93,7 +93,7 @@ def add_job_to_slurm_queue(context: Context, name: str) -> None:
     job_time_min = context["JOB_TIME_MIN"]
     sbatch_path = context["SBATCH_PATH"]
     slurm_log_dir = context["SLURM_LOG_DIR"]
-    tacc_sync_bin_dir = context["TACC_SYNC__BIN_DIR"]
+    tacc_sync_bin_dir = context["TACC_SYNC_BIN_DIR"]
 
     # run the sacct command to determine our jobs currently running in the slurm queue
     #     sbatch_path            The path to the 'sbatch' command
