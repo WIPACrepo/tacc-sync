@@ -23,7 +23,7 @@ pub struct HpssFile {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TaccSyncChecksum {
     /// the adler32 checksum of the file
-    pub adler32: String,
+    pub adler32: Option<String>,
     /// the sha512 checksum of the file
     pub sha512: String,
 }
