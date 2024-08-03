@@ -23,6 +23,7 @@ EXPECTED_CONFIG: KeySpec = {
     "CLIENT_SECRET": None,  # must be provided
     "FILE_CATALOG_REST_URL": "https://file-catalog.icecube.wisc.edu",
     "INBOX_DIR": "/global/homes/i/icecubed/tacc-sync/work/checksum_queue",
+    "JADE_LTA_DB_PATH": "jade-lta-db.json",
     "LOG_LEVEL": "NOTSET",
     "LOG_PATH": "/global/homes/i/icecubed/tacc-sync/work/log/checksum_lookup.log",
     "OUTBOX_DIR": "/global/homes/i/icecubed/tacc-sync/work/hpss_queue",
@@ -89,6 +90,45 @@ def load_json(json_path: str) -> JsonObj:
         return cast(JsonObj, json_obj)
 
 
+async def lookup_checksum(context: Context, file: JsonObj) -> str:
+    # first, try to query for the checksum from the File Catalog
+    try:
+        return await query_file_catalog(context, file)
+    except Exception as e:
+        LOG.error(f"Message: {e}")
+
+    # if that failed, try to look up the checksum in the old JADE LTA database
+    # here, we use a JSON export of the JADE LTA database as a proxy for the
+    # database itself, because who wants to run MySQL at NERSC, amirite?
+    file_name = file["file_name"]
+    jade_lta_db = context["JADE_LTA_DB"]
+
+    # Rows exported from the JADE LTA database look like this:
+    # {
+    #     "jade_bundle_id": 89,
+    #     "bundle_file": "1f255bed-31d9-430e-88fa-379748339d81.zip",
+    #     "checksum": "a5b2908a71765eeecf3c5770bf71dd0a068502ccbaffc280b8c113a7f3d435d15078e0bec77d3798bf16af6d19b22c57b5c5ecc65f131a29131d8368fa5644d9",
+    #     "closed": 1,
+    #     "date_created": "2016-09-07T12:15:11",
+    #     "date_updated": "2016-09-07T12:39:27",
+    #     "destination": "/data/exp/IceCube/2008/filtered/PFFilt/1122",
+    #     "size": 32995815864,
+    #     "uuid": "1f255bed-31d9-430e-88fa-379748339d81",
+    #     "version": 307,
+    #     "extension": 0
+    # },
+
+    # for each bundle
+    for bundle in jade_lta_db["bundles"]:
+        # if the bundle filename is plum
+        if bundle["bundle_file"] == file_name:
+            # then this is our checksum!
+            return bundle["checksum"]
+
+    # whoops; no love -- no checksum in catalog, no checksum in JADE LTA DB
+    raise Exception("Checksum not found in File Catalog or JADE LTA DB!")
+
+
 async def lookup_work_unit(context: Context, work_unit_path: str, work_unit: WorkUnit) -> None:
     """Look up the checksums for the files in a work unit."""
     outbox_dir = context["OUTBOX_DIR"]
@@ -124,7 +164,7 @@ async def lookup_work_unit(context: Context, work_unit_path: str, work_unit: Wor
             LOG.warn(f"File {file_name} already has checksum: {file['checksum']}")
             continue
         # since we don't have a checksum, we need to look it up
-        checksum = await query_file_catalog(context, file)
+        checksum = lookup_checksum(context, file)
         file['checksum'] = checksum
         LOG.info(f"Found checksum for File {file_name}: {file['checksum']}")
 
@@ -252,6 +292,7 @@ def main_sync() -> None:
     context: Context = {
         "FILE_CATALOG_CLIENT": client,
         "INBOX_DIR": cast(str, config["INBOX_DIR"]),
+        "JADE_LTA_DB": load_json(config["JADE_LTA_DB_PATH"]),
         "OUTBOX_DIR": cast(str, config["OUTBOX_DIR"]),
         "PID_PATH": cast(str, config["PID_PATH"]),
         "QUARANTINE_DIR": cast(str, config["QUARANTINE_DIR"]),

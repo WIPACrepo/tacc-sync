@@ -16,19 +16,20 @@ cd ${TACC_SYNC_ROOT}
 source env/bin/activate
 
 # component configuration
-export AUTH_OPENID_URL=${AUTH_OPENID_URL:="https://keycloak.icecube.wisc.edu/auth/realms/IceCube"}
-export CLIENT_ID=${CLIENT_ID:="long-term-archive"}
-export CLIENT_SECRET=${CLIENT_SECRET:="$(<keycloak-client-secret)"}
-export FILE_CATALOG_REST_URL=${FILE_CATALOG_REST_URL:="https://file-catalog.icecube.wisc.edu"}
-export INBOX_DIR=${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/checksum_queue"}
-export LOG_LEVEL=${LOG_LEVEL:="DEBUG"}
-export LOG_PATH=${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/checksum_lookup.log"}
-export OUTBOX_DIR=${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/hpss_queue"}
-export PID_PATH=${PID_PATH:="${TACC_SYNC_WORK_ROOT}/semaphore/checksum_lookup.pid"}
-export QUARANTINE_DIR=${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/checksum_lookup"}
-export RUN_ONCE_AND_DIE=${RUN_ONCE_AND_DIE:="TRUE"}
-export SEMAPHORE_DIR=${SEMAPHORE_DIR:="${TACC_SYNC_WORK_ROOT}/semaphore"}
-export WORK_SLEEP_SECONDS=${WORK_SLEEP_SECONDS:="3600"}  # 1 hour
+: ${AUTH_OPENID_URL:="https://keycloak.icecube.wisc.edu/auth/realms/IceCube"}
+: ${CLIENT_ID:="long-term-archive"}
+: ${CLIENT_SECRET:="$(<keycloak-client-secret)"}
+: ${FILE_CATALOG_REST_URL:="https://file-catalog.icecube.wisc.edu"}
+: ${INBOX_DIR:="${TACC_SYNC_WORK_ROOT}/checksum_queue"}
+: ${JADE_LTA_DB_PATH:="jade-lta-db.json"}
+: ${LOG_LEVEL:="DEBUG"}
+: ${LOG_PATH:="${TACC_SYNC_WORK_ROOT}/log/checksum_lookup.log"}
+: ${OUTBOX_DIR:="${TACC_SYNC_WORK_ROOT}/hpss_queue"}
+: ${PID_PATH:="${TACC_SYNC_WORK_ROOT}/semaphore/checksum_lookup.pid"}
+: ${QUARANTINE_DIR:="${TACC_SYNC_WORK_ROOT}/quarantine/checksum_lookup"}
+: ${RUN_ONCE_AND_DIE:="TRUE"}
+: ${SEMAPHORE_DIR:="${TACC_SYNC_WORK_ROOT}/semaphore"}
+: ${WORK_SLEEP_SECONDS:="3600"}  # 1 hour
 
 # if we've already got a .pid file, then bail out
 if [[ -f $PID_PATH ]]; then
