@@ -166,7 +166,7 @@ async def lookup_work_unit(context: Context, work_unit_path: str, work_unit: Wor
             LOG.warn(f"File {file_name} already has checksum: {file['checksum']}")
             continue
         # since we don't have a checksum, we need to look it up
-        checksum = lookup_checksum(context, file)
+        checksum = await lookup_checksum(context, file)
         file['checksum'] = checksum
         LOG.info(f"Found checksum for File {file_name}: {file['checksum']}")
 
