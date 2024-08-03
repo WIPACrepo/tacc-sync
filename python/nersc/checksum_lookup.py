@@ -123,7 +123,9 @@ async def lookup_checksum(context: Context, file: JsonObj) -> str:
         # if the bundle filename is plum
         if bundle["bundle_file"] == file_name:
             # then this is our checksum!
-            return bundle["checksum"]
+            return {
+                "sha512": bundle["checksum"],
+            }
 
     # whoops; no love -- no checksum in catalog, no checksum in JADE LTA DB
     raise Exception("Checksum not found in File Catalog or JADE LTA DB!")
